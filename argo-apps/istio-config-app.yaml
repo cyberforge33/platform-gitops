@@ -1,20 +1,32 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
   name: istio-config
   namespace: argocd
 spec:
-  project: default
-  source:
-    repoURL: https://github.com/cyberforge33/istio-config.git
-    targetRevision: HEAD
-    path: overlay/dev
-  destination:
-    server: https://kubernetes.default.svc
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true      
-      - PruneLast=true
-    automated:
-      prune: true
-      selfHeal: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - list:
+      elements:
+      - env: dev
+        path: overlays/dev
+        targetRevision: HEAD
+  template:
+    metadata:
+      name: 'monitoring-{{.env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/cyberforge33/istio-config.git
+        targetRevision: '{{.targetRevision}}'
+        path: '{{.path}}'
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+        automated:
+          prune: true
+          selfHeal: true

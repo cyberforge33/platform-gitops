@@ -1,65 +1,74 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
   name: kube-prometheus-stack
   namespace: argocd
 spec:
-  project: default
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 72.6.2
-    helm:
-      values: |
-        crds:
-          enabled: true
-        prometheus:
-          enabled: true
-          prometheusSpec:
-            serviceMonitorSelector: {}
-            serviceMonitorNamespaceSelector: {}
-            podMonitorNamespaceSelector: {}
-            podMonitorSelector: {}  
-        prometheusOperator:
-          enabled: true
-        grafana:
-          enabled: true
-        kubeStateMetrics:
-          enabled: true
-        kubeApiServer:
-          enabled: true
-        kubeControllerManager:
-          enabled: true
-        kubeEtcd:
-          enabled: true
-        kubeProxy:
-          enabled: true
-        kubeScheduler:
-          enabled: true
-        kubelet:
-          enabled: true
-        kubeDns:
-          enabled: true
-        coreDns:
-          enabled: true
-        serviceMonitor:
-          enabled: true
-        alertManager:
-          enabled: false
-        windowsMonitoring:
-          enabled: false
-        nodeExporter:
-          enabled: false
-        thanosRuler:
-          enabled: false
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true      
-      - PruneLast=true
-      - ServerSideApply=true
-    automated:
-      prune: true
-      selfHeal: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - list:
+      elements:
+      - env: dev
+        targetRevision: 72.6.2
+  template:
+    metadata:
+      name: 'kube-prometheus-stack-{{.env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://prometheus-community.github.io/helm-charts
+        chart: kube-prometheus-stack
+        targetRevision: '{{.targetRevision}}'
+        helm:
+          values: |
+            crds:
+              enabled: true
+            prometheus:
+              enabled: true
+              prometheusSpec:
+                serviceMonitorSelector: {}
+                serviceMonitorNamespaceSelector: {}
+                podMonitorNamespaceSelector: {}
+                podMonitorSelector: {}  
+            prometheusOperator:
+              enabled: true
+            grafana:
+              enabled: true
+            kubeStateMetrics:
+              enabled: true
+            kubeApiServer:
+              enabled: true
+            kubeControllerManager:
+              enabled: true
+            kubeEtcd:
+              enabled: true
+            kubeProxy:
+              enabled: true
+            kubeScheduler:
+              enabled: true
+            kubelet:
+              enabled: true
+            kubeDns:
+              enabled: true
+            coreDns:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+            alertManager:
+              enabled: false
+            windowsMonitoring:
+              enabled: false
+            nodeExporter:
+              enabled: false
+            thanosRuler:
+              enabled: false
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+        automated:
+          prune: true
+          selfHeal: true

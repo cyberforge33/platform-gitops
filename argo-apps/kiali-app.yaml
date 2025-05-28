@@ -1,34 +1,44 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
   name: kiali
   namespace: argocd
 spec:
-  project: default
-  source:
-    repoURL: https://kiali.org/helm-charts
-    chart: kiali-operator
-    targetRevision: 2.10.0
-    helm:
-      values: |
-        metrics:
-          enabled: true
-        cr:
-          create: true
-          namespace: istio-system
-          spec:
-            auth:
-              strategy: anonymous
-            external_services:
-              prometheus:
-                url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: kiali-operator
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true      
-      - PruneLast=true
-    automated:
-      prune: true
-      selfHeal: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - list:
+      elements:
+      - env: dev        
+        targetRevision: 2.10.0
+  template:
+    metadata:
+      name: 'kiali-{{.env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://kiali.org/helm-charts
+        chart: kiali-operator
+        targetRevision: '{{.targetRevision}}'
+        helm:
+          values: |
+            metrics:
+              enabled: true
+            cr:
+              create: true
+              namespace: istio-system
+              spec:
+                auth:
+                  strategy: anonymous
+                external_services:
+                  prometheus:
+                    url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+        automated:
+          prune: true
+          selfHeal: true
