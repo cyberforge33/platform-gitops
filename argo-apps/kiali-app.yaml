@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kiali
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://kiali.org/helm-charts
+    chart: kiali-operator
+    targetRevision: 2.10.0
+    helm:
+      values: |
+        metrics:
+          enabled: true
+        cr:
+          create: true
+          namespace: istio-system
+          spec:
+            auth:
+              strategy: anonymous
+            external_services:
+              prometheus:
+                url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kiali-operator
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true      
+      - PruneLast=true
+    automated:
+      prune: true
+      selfHeal: true
