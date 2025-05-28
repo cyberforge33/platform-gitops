@@ -11,6 +11,7 @@ spec:
       elements:
       - env: dev
         targetRevision: 72.6.2
+        server: https://kubernetes.default.svc
   template:
     metadata:
       name: 'kube-prometheus-stack-{{.env}}'
@@ -64,7 +65,7 @@ spec:
             thanosRuler:
               enabled: false
       destination:
-        server: https://kubernetes.default.svc
+        server: '{{.server}}'
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
