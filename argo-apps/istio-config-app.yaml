@@ -15,7 +15,7 @@ spec:
         server: https://kubernetes.default.svc
   template:
     metadata:
-      name: 'monitoring-{{.env}}'
+      name: 'istio-config-{{.env}}'
     spec:
       project: default
       source:
@@ -24,6 +24,7 @@ spec:
         path: '{{.path}}'
       destination:
         server: '{{.server}}'
+        namespace: isito-system
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
