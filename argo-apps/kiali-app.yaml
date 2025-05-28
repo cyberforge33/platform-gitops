@@ -33,7 +33,7 @@ spec:
                   strategy: anonymous
                 external_services:
                   prometheus:
-                    url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+                    url: http://prometheus.minikube.local
       destination:
         server: '{{.server}}'
         namespace: kiali-operator
