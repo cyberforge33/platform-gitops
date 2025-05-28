@@ -36,6 +36,7 @@ spec:
                     url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
       destination:
         server: '{{.server}}'
+        namespace: kiali-operator
       syncPolicy:
         syncOptions:
           - CreateNamespace=true

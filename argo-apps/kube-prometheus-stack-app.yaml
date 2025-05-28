@@ -66,6 +66,7 @@ spec:
               enabled: false
       destination:
         server: '{{.server}}'
+        namespace: monitoring
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
