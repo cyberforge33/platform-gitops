@@ -3,3 +3,13 @@ kind: Kustomization
 
 resources:
   - ../../argo-apps
+
+patches:
+  - path: ./patches/patch-istio-traffic-management-appset.yaml
+    target:
+      kind: ApplicationSet
+      name: istio-traffic-management
+  - path: ./patches/patch-istio-gateways-appset.yaml
+    target:
+      kind: ApplicationSet
+      name: istio-gateways
