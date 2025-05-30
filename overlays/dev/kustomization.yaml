@@ -5,10 +5,10 @@ resources:
   - ../../argo-apps
 
 patches:
-  - path: ./patches/patch-istio-traffic-management-appset.yaml
+  - path: ./patches/patch-istio-traffic-mgmt-appset.yaml
     target:
       kind: ApplicationSet
-      name: istio-traffic-management
+      name: istio-traffic-mgmt
   - path: ./patches/patch-istio-gateways-appset.yaml
     target:
       kind: ApplicationSet

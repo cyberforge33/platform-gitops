@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: istio-traffic-management
+  name: istio-traffic-mgmt
   namespace: argocd
 spec:
   goTemplate: true
@@ -10,12 +10,12 @@ spec:
   - list:
       elements:
       - env: dev
-        path: overlays/dev/traffic-management
+        path: overlays/dev/traffic-mgmt
         targetRevision: HEAD
         server: https://kubernetes.default.svc
   template:
     metadata:
-      name: 'istio-traffic-management-{{.env}}'
+      name: 'istio-traffic-mgmt-{{.env}}'
     spec:
       project: default
       source:
