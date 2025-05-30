@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: monitoring-config
+  name: istio-gateways
   namespace: argocd
 spec:
   goTemplate: true
@@ -10,21 +10,21 @@ spec:
   - list:
       elements:
       - env: dev
-        path: overlays/dev
+        path: overlays/dev/gateways
         targetRevision: HEAD
         server: https://kubernetes.default.svc
   template:
     metadata:
-      name: 'monitoring-config-{{.env}}'
+      name: 'istio-gateways-{{.env}}'
     spec:
       project: default
       source:
-        repoURL: https://github.com/cyberforge33/monitoring-config.git
+        repoURL: https://github.com/cyberforge33/istio-config.git
         targetRevision: '{{.targetRevision}}'
         path: '{{.path}}'
       destination:
         server: '{{.server}}'
-        namespace: monitoring
+        namespace: isito-system
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
