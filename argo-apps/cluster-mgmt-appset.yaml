@@ -7,8 +7,8 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-  - list:
-      elements: []
+    - list:
+        elements: []
   template:
     metadata:
       name: '{{lower .name}}'
@@ -16,12 +16,16 @@ spec:
         app.kubernetes.io/partof: "{{lower .name}}"
     spec:
       project: default
-      source:
-        repoURL: "{{.chartRepo}}"        
-        chart: "{{.chart}}"
-        targetRevision: "{{.chartVersion}}"
-        helm:
-          valuesFile: "{{.valuesFile}}"
+      sources:
+        - repoURL: "{{.chartRepo}}"        
+          chart: "{{.chart}}"
+          targetRevision: "{{.chartVersion}}"
+          helm:
+            valueFiles:
+              - "$customvalues/{{.valueFiles}}"
+        - repoURL: "{{.githubRepo}}"
+          targetRevision: "{{.targetRevision}}"
+          ref: customvalues
       destination:
         server: "{{.url}}"
         namespace: "{{.namespace}}"

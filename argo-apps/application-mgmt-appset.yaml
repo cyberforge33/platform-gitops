@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: cluster-mgmt
+  name: application-mgmt
   namespace: argocd
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-  - list:
-      elements: []
+    - list:
+        elements: []
   template:
     metadata:
       name: '{{lower .name}}'
@@ -21,7 +21,8 @@ spec:
         chart: "{{.chart}}"
         targetRevision: "{{.chartVersion}}"
         helm:
-          valuesFile: "{{.valuesFile}}"
+          valueFiles:
+            - "{{.valueFiles}}"
       destination:
         server: "{{.url}}"
         namespace: "{{.namespace}}"
