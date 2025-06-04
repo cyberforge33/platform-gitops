@@ -16,13 +16,16 @@ spec:
         app.kubernetes.io/partof: "{{lower .name}}"
     spec:
       project: default
-      source:
-        repoURL: "{{.chartRepo}}"        
-        chart: "{{.chart}}"
-        targetRevision: "{{.chartVersion}}"
-        helm:
-          valueFiles:
-            - "{{.valueFiles}}"
+      sources:
+        - repoURL: "{{.chartRepo}}"        
+          chart: "{{.chart}}"
+          targetRevision: "{{.chartVersion}}"
+          helm:
+            valueFiles:
+              - "$customvalues/{{.valueFiles}}"
+        - repoURL: "{{.githubRepo}}"
+          targetRevision: "{{.targetRevision}}"
+          ref: customvalues
       destination:
         server: "{{.url}}"
         namespace: "{{.namespace}}"
@@ -30,6 +33,7 @@ spec:
         syncOptions:
           - PruneLast=true
           - CreateNamespace=true          
+          - ServerSideApply=true
         automated:
           prune: true
           selfHeal: true
