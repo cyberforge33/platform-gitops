@@ -23,6 +23,13 @@ minikube service -n monitoring kube-prometheus-stack-grafana
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
 kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
 
+# Minikube Istio Ingress
+
+#Verify External-IP
+kubectl get svc istio-ingressgateway -n istio-system
+minikube tunnel
+# URLS: grafana.minikube.local, kiali.minikube.local, prometheus.minikube.local
+
 ```
 </br>
 
