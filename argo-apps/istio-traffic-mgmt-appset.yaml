@@ -10,7 +10,7 @@ spec:
   - list:
       elements:
       - env: dev
-        path: overlays/dev/traffic-mgmt
+        path: overlays/dev/traffic-management
         targetRevision: HEAD
         server: https://kubernetes.default.svc
   template:

@@ -3,3 +3,6 @@ kind: Kustomization
 
 resources:
   - ./cluster-mgmt-appset.yaml
+  - ./istio-gateways-appset.yaml
+  - ./istio-traffic-mgmt-appset.yaml
+  - ./monitoring-appset.yaml
