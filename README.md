@@ -4,7 +4,7 @@ istioctl install -y
 
 # install ArgoCD in k8s
 kubectl create namespace argocd
-helm install argocd argo-cd/argo-cd -n argocd --create-namespace
+helm install -n argocd argocd argo-cd/argo-cd --set global.domain=argocd.minikube.local --create-namespace  
 
 # for kustomize to work need to edit the config map and add this line kustomize.buildOptions: --enable-helm to the data section
 kubectl edit cm argocd-cm -n argocd
