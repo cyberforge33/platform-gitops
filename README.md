@@ -4,7 +4,7 @@ istioctl install -y
 
 # install ArgoCD in k8s
 kubectl create namespace argocd
-helm install argocd argo-cd/argo-cd -n argocd
+helm install argocd argo-cd/argo-cd -n argocd --create-namespace
 
 # for kustomize to work need to edit the config map and add this line kustomize.buildOptions: --enable-helm to the data section
 kubectl edit cm argocd-cm -n argocd
@@ -20,7 +20,7 @@ minikube service -n monitoring kube-prometheus-stack-prometheus
 minikube service -n monitoring kube-prometheus-stack-grafana
 
 # login with admin user and below token (as in documentation):
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode && echo
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
 kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
 
 ```
