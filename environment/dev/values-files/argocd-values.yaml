@@ -3,7 +3,7 @@
 ##
 
 # -- Provide a name in place of `argocd`
-nameOverride: argocd
+nameOverride: ""
 # -- String to fully override `"argo-cd.fullname"`
 fullnameOverride: ""
 # -- Override the namespace
@@ -42,7 +42,7 @@ crds:
 global:
   # -- Default domain used by all components
   ## Used for ingresses, certificates, SSO, notifications, etc.
-  domain: argocd.example.com
+  domain: argocd.minikube.local
 
   # -- Runtime class name for all components
   runtimeClassName: ""
