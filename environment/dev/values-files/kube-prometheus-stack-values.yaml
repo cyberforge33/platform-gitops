@@ -1,0 +1,41 @@
+crds:
+  enabled: true
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    podMonitorNamespaceSelector: {}
+    podMonitorSelector: {}  
+prometheusOperator:
+  enabled: true
+grafana:
+  enabled: true
+kubeStateMetrics:
+  enabled: true
+kubeApiServer:
+  enabled: true
+kubeControllerManager:
+  enabled: true
+kubeEtcd:
+  enabled: true
+kubeProxy:
+  enabled: true
+kubeScheduler:
+  enabled: true
+kubelet:
+  enabled: true
+kubeDns:
+  enabled: true
+coreDns:
+  enabled: true
+serviceMonitor:
+  enabled: true
+alertManager:
+  enabled: false
+windowsMonitoring:
+  enabled: false
+nodeExporter:
+  enabled: false
+thanosRuler:
+  enabled: false

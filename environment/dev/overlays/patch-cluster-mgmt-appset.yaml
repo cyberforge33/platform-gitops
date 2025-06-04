@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gitops-apps
+  namespace: argocd
+spec:
+  - list:
+    elements:
+      - name: argocd
+        namespace: argocd
+        chartRepo: https://argoproj.github.io/argo-helm
+        chart: argo-cd
+        chartVersion: 8.0.14
+        url: https://kubernetes.default.svc
+        valuesFile: ../values-files/argocd-values.yaml
+      - name: kiali
+        namespace: istio-system
+        chartRepo: https://kiali.org/helm-charts
+        chart: kiali-operator
+        chartVersion: 2.10.0
+        url: https://kubernetes.default.svc
+        valuesFile: ../values-files/kiali-values.yaml
+      - name: kube-prometheus-stack
+        namespace: monitoring
+        chartRepo: https://prometheus-community.github.io/helm-charts
+        chart: kube-prometheus-stack
+        chartVersion: 72.6.2
+        url: https://kubernetes.default.svc
+        valuesFile: ../values-files/kube-prometheus-stack-values.yaml

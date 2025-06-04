@@ -1,0 +1,11 @@
+metrics:
+  enabled: true
+cr:
+  create: true
+  namespace: istio-system
+  spec:
+    auth:
+      strategy: anonymous
+    external_services:
+      prometheus:
+        url: http://prometheus.minikube.local
