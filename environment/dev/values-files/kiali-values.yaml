@@ -11,5 +11,12 @@ cr:
         url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
       grafana:
         enabled: true
+        auth:
+          type: basic
+          username: admin
+          password:
+            from_secret:
+              name: kiali-grafana-secret
+              key: password
         in_cluster_url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local
         url: http://grafana.minikube.local

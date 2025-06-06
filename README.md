@@ -26,6 +26,15 @@ kubectl apply -k environment/dev/overlays
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
 kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
 
+#Create a Grafana K8s Secret for Kiali
+kubectl get secret kube-prometheus-stack-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 --decode > grafana-password.txt
+
+kubectl create secret generic kiali-grafana-secret \
+  --from-literal=username=admin \
+  --from-file=password=grafana-password.txt \
+  -n istio-system
+
+
 #Verify External-IP - URLS: grafana.minikube.local, kiali.minikube.local, prometheus.minikube.local
 kubectl get svc istio-ingressgateway -n istio-system
 minikube tunnel
