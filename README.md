@@ -45,6 +45,8 @@ minikube service -n argocd argocd-server
 minikube service -n monitoring kube-prometheus-stack-prometheus
 minikube service -n monitoring kube-prometheus-stack-grafana
 
+#If Kiali hangs https://pre-v1-41.kiali.io/documentation/v1.39/installation-guide/#_known_problem_uninstall_hangs
+
 ```
 </br>
 
