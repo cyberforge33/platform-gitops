@@ -7,7 +7,7 @@
 # Start K8s Cluster on Specific Version
 minikube start --kubernetes-version=v1.33.1
 
-# Delete K8s Cluster
+# Delete K8s Cluster (if you need to cleanup later)
 minikube delete
 
 # Install istio
@@ -22,6 +22,14 @@ kubectl edit cm argocd-cm -n argocd
 # Deploy management services
 kubectl apply -k environment/dev/overlays
 
+# login with admin user and below token (as in documentation):
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
+kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+
+#Verify External-IP - URLS: grafana.minikube.local, kiali.minikube.local, prometheus.minikube.local
+kubectl get svc istio-ingressgateway -n istio-system
+minikube tunnel
+
 # Port Forwarding to access UI
 kubectl port-forward -n argocd svc/argocd-server 8443:443
 kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
@@ -31,17 +39,6 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 8080:80
 minikube service -n argocd argocd-server
 minikube service -n monitoring kube-prometheus-stack-prometheus
 minikube service -n monitoring kube-prometheus-stack-grafana
-
-# login with admin user and below token (as in documentation):
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
-kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
-
-# Minikube Istio Ingress
-
-#Verify External-IP
-kubectl get svc istio-ingressgateway -n istio-system
-minikube tunnel
-# URLS: grafana.minikube.local, kiali.minikube.local, prometheus.minikube.local
 
 ```
 </br>
