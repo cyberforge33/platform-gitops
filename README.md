@@ -29,11 +29,7 @@ kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath="{.da
 #Create a Grafana K8s Secret for Kiali
 kubectl get secret kube-prometheus-stack-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 --decode > grafana-password.txt
 
-kubectl create secret generic kiali-grafana-secret \
-  --from-literal=username=admin \
-  --from-file=password=grafana-password.txt \
-  -n istio-system
-
+kubectl create secret generic kiali-grafana-secret -n istio-system --from-literal=username=admin --from-file=password=grafana-password.txt
 
 #Verify External-IP - URLS: grafana.minikube.local, kiali.minikube.local, prometheus.minikube.local
 kubectl get svc istio-ingressgateway -n istio-system

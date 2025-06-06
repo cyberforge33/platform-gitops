@@ -12,7 +12,7 @@ cr:
       grafana:
         enabled: true
         auth:
-          type: bearer
+          type: basic
           token: secret:kiali-grafana-secret:password
         in_cluster_url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local
         url: http://grafana.minikube.local
