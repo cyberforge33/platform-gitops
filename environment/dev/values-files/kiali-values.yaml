@@ -8,4 +8,4 @@ cr:
       strategy: anonymous
     external_services:
       prometheus:
-        url: http://prometheus.minikube.local
+        url: kube-prometheus-stack-prometheus.monitoring.svc.cluster.local
