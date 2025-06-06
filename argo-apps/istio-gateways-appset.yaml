@@ -24,7 +24,7 @@ spec:
         path: '{{.path}}'
       destination:
         server: '{{.server}}'
-        namespace: isito-system
+        namespace: istio-system
       syncPolicy:
         syncOptions:
           - CreateNamespace=true

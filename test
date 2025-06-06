@@ -1,0 +1,16 @@
+argocd-application-controller-0	application-controller
+argocd-applicationset-controller-86dc9cd8c9-ss7sd	applicationset-controller
+argocd-notifications-controller-79f69b9475-pmnh6	notifications-controller
+argocd-redis-75c4fc669b-qw7wk	redis
+argocd-repo-server-6dfc6d86cd-rgg2z	repo-server
+argocd-server-7bf86dcb5f-ddgvx	server
+istio-ingressgateway-6fcf48f7d4-p6jpj	istio-proxy
+istiod-84444f67c-7w79x	discovery
+coredns-674b8bbfcf-246m5	coredns
+etcd-minikube	etcd
+kube-apiserver-minikube	kube-apiserver
+kube-controller-manager-minikube	kube-controller-manager
+kube-proxy-4vgsr	kube-proxy
+kube-scheduler-minikube	kube-scheduler
+storage-provisioner	storage-provisioner
+kube-prometheus-stack-admission-create-tczkf	create istio-proxy
