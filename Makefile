@@ -90,11 +90,11 @@ deploy-argo:
 	@kubectl get ns $(ARGOCD_NAMESPACE) >/dev/null 2>&1 || kubectl create ns $(ARGOCD_NAMESPACE)
 	kubectl apply -f manifests/argo/argocd.yaml
 
-deploy-argo-project:
-	kubectl apply -f manifests/argo/project.yaml
+deploy-argo-projects:
+	kubectl apply -f manifests/argo/projects/
 
-deploy-root-app:
-	kubectl apply -f manifests/argo/root-app.yaml
+# deploy-root-app:
+# 	kubectl apply -f manifests/argo/root-app.yaml
 
 argo-port-forward:
 	@echo "Waiting for Argo CD server to be ready..."
@@ -141,8 +141,7 @@ bootstrap-argo:
 	@echo "Bootstrapping Argo"	
 	@$(MAKE) wait-argocd-csv
 	@$(MAKE) deploy-argo
-	@$(MAKE) deploy-argo-project
-	@$(MAKE) deploy-root-app
+	@$(MAKE) deploy-argo-projects
 	@$(MAKE) argo-admin-password
 	@$(MAKE) argo-port-forward
 	@echo "Argo ready"
