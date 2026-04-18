@@ -1,4 +1,4 @@
-# 🧪 Kind Single-Cluster Platform Lab (OLM + Argo CD)
+# 🧪 Kind Single-Cluster Platform
 
 This repository provides a simple way to create and manage a local Kubernetes platform using **kind**, a Makefile-driven workflow, and platform components like **Operator Lifecycle Manager (OLM)** and **Argo CD Operator** for GitOps.
 
