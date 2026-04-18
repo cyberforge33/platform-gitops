@@ -8,7 +8,7 @@ spec:
 
   source:
     repoURL: https://github.com/cyberforge33/platform-gitops.git
-    targetRevision: HEAD
+    targetRevision: develop
     path: apps
 
   destination:
