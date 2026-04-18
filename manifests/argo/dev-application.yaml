@@ -8,7 +8,7 @@ spec:
 
   source:
     repoURL: https://github.com/cyberforge33/platform-gitops.git
-    targetRevision: develop   # 👈 IMPORTANT (git flow)
+    targetRevision: develop
     path: apps/dev
 
   destination:

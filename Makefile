@@ -9,7 +9,7 @@ ARGOCD_NAMESPACE ?= argocd
 CSV_NAME ?= argocd-operator.v0.17.0
 
 .PHONY: \
-	create delete create-namespaces \
+	create delete \
 	install-olm setup-olm-catalog \
 	argo-subscription wait-argocd-csv \
 	deploy-argo deploy-argo-project deploy-argo-application \
@@ -31,16 +31,6 @@ create:
 
 delete:
 	@kind delete cluster --name $(KIND_CLUSTER_NAME) || true
-
-
-# -------------------------
-# Namespaces (environments)
-# -------------------------
-
-create-namespaces:
-	kubectl create ns dev || true
-	kubectl create ns test || true
-	kubectl create ns prod || true
 
 
 # -------------------------
@@ -93,9 +83,6 @@ deploy-argo:
 deploy-argo-projects:
 	kubectl apply -f manifests/argo/projects/
 
-# deploy-root-app:
-# 	kubectl apply -f manifests/argo/root-app.yaml
-
 argo-port-forward:
 	@echo "Waiting for Argo CD server to be ready..."
 	@kubectl wait --for=condition=available deployment/example-argocd-server -n $(ARGOCD_NAMESPACE) --timeout=300s
@@ -131,7 +118,6 @@ platform-up: bootstrap-cluster bootstrap-argo
 bootstrap-cluster:
 	@echo "Bootstrapping cluster"
 	@$(MAKE) create
-	@$(MAKE) create-namespaces
 	@kubectl get ns olm >/dev/null 2>&1 || $(MAKE) install-olm
 	@$(MAKE) setup-olm-catalog
 	@$(MAKE) argo-subscription

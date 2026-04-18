@@ -4,15 +4,19 @@ metadata:
   name: dev-project
   namespace: argocd
 spec:
-  description: Dev environment
+  description: Fully open dev project (no restrictions)
 
   sourceRepos:
     - '*'
 
   destinations:
-    - namespace: dev
+    - namespace: '*'
       server: https://kubernetes.default.svc
 
   clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  namespaceResourceWhitelist:
     - group: '*'
       kind: '*'
