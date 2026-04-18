@@ -4,12 +4,12 @@ metadata:
   name: dev-app
   namespace: argocd
 spec:
-  project: platform-project
+  project: dev-project
 
   source:
     repoURL: https://github.com/cyberforge33/platform-gitops.git
-    targetRevision: develop
-    path: apps/dev/workloads
+    targetRevision: develop   # 👈 IMPORTANT (git flow)
+    path: apps/dev
 
   destination:
     server: https://kubernetes.default.svc
