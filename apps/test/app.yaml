@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: demo-app
+  name: test-app
   namespace: argocd
 spec:
   project: platform-project
 
   source:
-    repoURL: https://github.com/example/repo.git
-    targetRevision: HEAD
-    path: apps/dev
+    repoURL: https://github.com/cyberforge33/platform-gitops.git
+    targetRevision: develop
+    path: apps/test/workloads
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: dev
+    namespace: test
 
   syncPolicy:
     automated:

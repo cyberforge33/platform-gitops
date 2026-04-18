@@ -93,8 +93,8 @@ deploy-argo:
 deploy-argo-project:
 	kubectl apply -f manifests/argo/project.yaml
 
-deploy-argo-application:
-	kubectl apply -f manifests/argo/application.yaml
+deploy-root-app:
+	kubectl apply -f manifests/argo/root-app.yaml
 
 argo-port-forward:
 	@echo "Waiting for Argo CD server to be ready..."
@@ -142,7 +142,7 @@ bootstrap-argo:
 	@$(MAKE) wait-argocd-csv
 	@$(MAKE) deploy-argo
 	@$(MAKE) deploy-argo-project
-	@$(MAKE) deploy-argo-application
+	@$(MAKE) deploy-root-app
 	@$(MAKE) argo-admin-password
 	@$(MAKE) argo-port-forward
 	@echo "Argo ready"
