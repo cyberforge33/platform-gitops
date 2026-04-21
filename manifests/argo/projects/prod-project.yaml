@@ -7,14 +7,13 @@ spec:
   description: Production environment
 
   sourceRepos:
-    - 'https://github.com/YOUR-REPO.git'   # 🔴 restrict in prod
+    - '*'
 
+  # Cluster and Namespace
   destinations:
     - namespace: prod
       server: https://kubernetes.default.svc
 
   clusterResourceWhitelist:
-    - group: ''
-      kind: Namespace
-    - group: apps
-      kind: Deployment
+    - group: '*'
+      kind: '*'

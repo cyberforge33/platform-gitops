@@ -9,6 +9,7 @@ spec:
   sourceRepos:
     - '*'
 
+  # Cluster and Namespace
   destinations:
     - namespace: test
       server: https://kubernetes.default.svc
