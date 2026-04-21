@@ -81,11 +81,20 @@ deploy-argo:
 	kubectl apply -f manifests/argo/argocd.yaml
 
 deploy-argo-projects:
+	@echo "Waiting for Argo CD server deployment to be created..."
+	@until kubectl get deployment example-argocd-server -n $(ARGOCD_NAMESPACE) >/dev/null 2>&1; do \
+		echo "⏳ Deployment not created yet... waiting 5s"; \
+		sleep 5; \
+	done
+
+	@echo "Waiting for Argo CD server to be ready..."
+	@kubectl wait --for=condition=available deployment/example-argocd-server \
+		-n $(ARGOCD_NAMESPACE) --timeout=300s
+
+	@echo "Deploying Argo CD projects..."
 	kubectl apply -f manifests/argo/projects/
 
 argo-port-forward:
-	@echo "Waiting for Argo CD server to be ready..."
-	@kubectl wait --for=condition=available deployment/example-argocd-server -n $(ARGOCD_NAMESPACE) --timeout=300s
 	@echo "Port-forwarding Argo CD on http://localhost:8000"
 	kubectl port-forward -n $(ARGOCD_NAMESPACE) svc/example-argocd-server 8000:80
 
