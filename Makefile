@@ -1,20 +1,20 @@
 # =========================
-# Single Cluster GitOps Platform
+# Single Cluster GitOps Platform (OLM v1)
 # =========================
 
 KIND_CLUSTER_NAME ?= platform
 KIND_CONFIG_DIR := kind
+OLM_VERSION := v1.8.0
 ARGOCD_SERVER ?= localhost:8000
 ARGOCD_NAMESPACE ?= argocd
-CSV_NAME ?= argocd-operator.v0.17.0
 
 .PHONY: \
 	create delete \
-	install-olm setup-olm-catalog \
-	argo-subscription wait-argocd-csv \
-	deploy-argo deploy-argo-project deploy-argo-application \
+	install-olm \
+	install-argocd-operator wait-argocd-operator \
+	deploy-argo deploy-argo-projects \
 	argo-port-forward argo-login argo-admin-password \
-	bootstrap-cluster bootstrap-argo
+	bootstrap-cluster bootstrap-argo platform-up
 
 
 # -------------------------
@@ -32,51 +32,55 @@ create:
 delete:
 	@kind delete cluster --name $(KIND_CLUSTER_NAME) || true
 
+create-namespaces:
+	@echo "Creating required namespaces..."
+	kubectl create ns argocd --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create ns olm --dry-run=client -o yaml | kubectl apply -f -
+
 
 # -------------------------
-# OLM (optional)
+# OLM v1 (operator-controller)
 # -------------------------
 
 install-olm:
-	curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.42.0/install.sh | bash -s v0.42.0
-
-setup-olm-catalog:
-	@echo "Applying OLM catalog..."
-	kubectl apply -f catalog.yaml
+	@echo "Installing OLM v1 (operator-controller $(OLM_VERSION))..."
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/download/$(OLM_VERSION)/install.sh | bash -s
 
 
 # -------------------------
-# Operator (OLM)
+# Operator Install (OLM v1)
 # -------------------------
 
-argo-subscription:
-	@echo "Installing Argo CD Operator subscription..."
-	kubectl apply -f operators/argo-subscription.yaml
+create-argocd-rbac:
+	@echo "Creating Argo CD installer RBAC..."
+	kubectl create ns argocd || true
+	kubectl apply -f manifests/olm/argocd-rbac.yaml
+
+install-argocd-operator:
+	@echo "Installing Argo CD via ClusterExtension..."
+	kubectl apply -f manifests/olm/argocd-extension.yaml
+
+wait-argocd-install:
+	@echo "Waiting for ClusterExtension to stabilize..."
+	@for i in $$(seq 1 60); do \
+		STATUS=$$(kubectl get clusterextension argocd -o jsonpath='{.status.conditions[?(@.type=="Installed")].status}' 2>/dev/null); \
+		echo "Installed status: $$STATUS"; \
+		if [ "$$STATUS" = "True" ]; then \
+			echo "✅ Argo CD installed"; \
+			exit 0; \
+		fi; \
+		sleep 10; \
+	done; \
+	echo "❌ Timeout waiting for Argo CD install"; \
+	exit 1
 
 
 # -------------------------
 # Argo CD
 # -------------------------
-wait-argocd-csv:
-	@echo "Waiting for Argo CD Operator CSV to reach Succeeded..."
-	@for i in $$(seq 1 60); do \
-		PHASE=$$(kubectl get csv -n operators $(CSV_NAME) \
-			-o jsonpath='{.status.phase}' 2>/dev/null); \
-		echo "Current phase: $$PHASE"; \
-		if [ "$$PHASE" = "Succeeded" ]; then \
-			echo "✅ CSV is Succeeded"; \
-			exit 0; \
-		fi; \
-		if [ "$$PHASE" = "Failed" ]; then \
-			echo "❌ CSV entered Failed state"; \
-			exit 1; \
-		fi; \
-		sleep 10; \
-	done; \
-	echo "❌ Timeout waiting for CSV"; \
-	exit 1
 
 deploy-argo:
+	@echo "Deploying Argo CD instance..."
 	@kubectl get ns $(ARGOCD_NAMESPACE) >/dev/null 2>&1 || kubectl create ns $(ARGOCD_NAMESPACE)
 	kubectl apply -f manifests/argo/argocd.yaml
 
@@ -93,6 +97,11 @@ deploy-argo-projects:
 
 	@echo "Deploying Argo CD projects..."
 	kubectl apply -f manifests/argo/projects/
+
+
+# -------------------------
+# Argo CD Access
+# -------------------------
 
 argo-port-forward:
 	@echo "Port-forwarding Argo CD on http://localhost:8000"
@@ -127,16 +136,17 @@ platform-up: bootstrap-cluster bootstrap-argo
 bootstrap-cluster:
 	@echo "Bootstrapping cluster"
 	@$(MAKE) create
-	@kubectl get ns olm >/dev/null 2>&1 || $(MAKE) install-olm
-	@$(MAKE) setup-olm-catalog
-	@$(MAKE) argo-subscription
+	@$(MAKE) create-namespaces
+	@$(MAKE) install-olm
+	@$(MAKE) create-argocd-rbac
+	@$(MAKE) install-argocd-operator
+	@$(MAKE) wait-argocd-install
 	@echo "Cluster ready"
 
-bootstrap-argo:      
-	@echo "Bootstrapping Argo"	
-	@$(MAKE) wait-argocd-csv
+bootstrap-argo:
+	@echo "Bootstrapping Argo CD..."
 	@$(MAKE) deploy-argo
 	@$(MAKE) deploy-argo-projects
 	@$(MAKE) argo-admin-password
 	@$(MAKE) argo-port-forward
-	@echo "Argo ready"
+	@echo "✅ Argo ready"
