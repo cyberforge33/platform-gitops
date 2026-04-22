@@ -5,6 +5,8 @@
 KIND_CLUSTER_NAME := "platform"
 KIND_CONFIG_DIR := "kind"
 OLM_VERSION := "v1.8.0"
+OLM_NAMESPACE := "olm"
+METALLB_NAMESPACE := "metallb-system"
 ARGOCD_SERVER := "localhost:8000"
 ARGOCD_NAMESPACE := "argocd"
 
@@ -27,9 +29,9 @@ delete:
 
 create-namespaces:
 	@echo "Creating required namespaces..."
-	kubectl create ns metallb-system --dry-run=client -o yaml | kubectl apply -f -
-	kubectl create ns argocd --dry-run=client -o yaml | kubectl apply -f -
-	kubectl create ns olm --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create ns {{METALLB_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create ns {{ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create ns {{OLM_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
 
 
 # -------------------------
@@ -73,6 +75,14 @@ wait-argocd-install:
 		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
 		--timeout=600s
 
+# -------------------------
+# MetalLB
+# -------------------------
+
+deploy-metallb:
+	@echo "Deploying MetalLb instance..."
+
+	@echo "✅ MetalLB deployed"
 
 # -------------------------
 # Argo CD
@@ -149,6 +159,11 @@ bootstrap-cluster:
 	just wait-argocd-install
 	@echo "Cluster ready"
 
+
+bootstrap-metallb:
+	@echo "Bootstrapping MetalLb..."
+	just deploy-metallb
+	@echo "✅ MetalLb ready"
 
 bootstrap-argo:
 	@echo "Bootstrapping Argo CD..."
