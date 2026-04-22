@@ -2,19 +2,11 @@
 # Single Cluster GitOps Platform (OLM v1)
 # =========================
 
-KIND_CLUSTER_NAME ?= platform
-KIND_CONFIG_DIR := kind
-OLM_VERSION := v1.8.0
-ARGOCD_SERVER ?= localhost:8000
-ARGOCD_NAMESPACE ?= argocd
-
-.PHONY: \
-	create delete \
-	install-olm \
-	install-argocd-operator wait-argocd-operator \
-	deploy-argo deploy-argo-projects \
-	argo-port-forward argo-login argo-admin-password \
-	bootstrap-cluster bootstrap-argo platform-up
+KIND_CLUSTER_NAME := "platform"
+KIND_CONFIG_DIR := "kind"
+OLM_VERSION := "v1.8.0"
+ARGOCD_SERVER := "localhost:8000"
+ARGOCD_NAMESPACE := "argocd"
 
 
 # -------------------------
@@ -23,14 +15,15 @@ ARGOCD_NAMESPACE ?= argocd
 
 create:
 	@echo "Creating kind cluster..."
-	@kind get clusters | grep -q "^$(KIND_CLUSTER_NAME)$$" && \
+	kind get clusters | grep -q "^{{KIND_CLUSTER_NAME}}$" && \
 		echo "Cluster already exists, skipping..." || \
 		kind create cluster \
-			--name $(KIND_CLUSTER_NAME) \
-			--config $(KIND_CONFIG_DIR)/kind.yaml
+			--name {{KIND_CLUSTER_NAME}} \
+			--config {{KIND_CONFIG_DIR}}/kind.yaml
 
 delete:
-	@kind delete cluster --name $(KIND_CLUSTER_NAME) || true
+	kind delete cluster --name {{KIND_CLUSTER_NAME}} || true
+
 
 create-namespaces:
 	@echo "Creating required namespaces..."
@@ -43,8 +36,8 @@ create-namespaces:
 # -------------------------
 
 install-olm:
-	@echo "Installing OLM v1 (operator-controller $(OLM_VERSION))..."
-	curl -L -s https://github.com/operator-framework/operator-controller/releases/download/$(OLM_VERSION)/install.sh | bash -s
+	@echo "Installing OLM v1 (operator-controller {{OLM_VERSION}})..."
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/download/{{OLM_VERSION}}/install.sh | bash -s
 
 
 # -------------------------
@@ -62,7 +55,7 @@ install-argocd-operator:
 
 wait-argocd-install:
 	@echo "Waiting for ClusterExtension to stabilize..."
-	@for i in $$(seq 1 60); do \
+	for i in $(seq 1 60); do \
 		STATUS=$$(kubectl get clusterextension argocd -o jsonpath='{.status.conditions[?(@.type=="Installed")].status}' 2>/dev/null); \
 		echo "Installed status: $$STATUS"; \
 		if [ "$$STATUS" = "True" ]; then \
@@ -81,19 +74,20 @@ wait-argocd-install:
 
 deploy-argo:
 	@echo "Deploying Argo CD instance..."
-	@kubectl get ns $(ARGOCD_NAMESPACE) >/dev/null 2>&1 || kubectl create ns $(ARGOCD_NAMESPACE)
+	kubectl get ns {{ARGOCD_NAMESPACE}} >/dev/null 2>&1 || kubectl create ns {{ARGOCD_NAMESPACE}}
 	kubectl apply -f manifests/argo/argocd.yaml
 
+
 deploy-argo-projects:
-	@echo "Waiting for Argo CD server deployment to be created..."
-	@until kubectl get deployment example-argocd-server -n $(ARGOCD_NAMESPACE) >/dev/null 2>&1; do \
-		echo "⏳ Deployment not created yet... waiting 5s"; \
+	@echo "Waiting for Argo CD server deployment..."
+	until kubectl get deployment example-argocd-server -n {{ARGOCD_NAMESPACE}} >/dev/null 2>&1; do \
+		echo "⏳ waiting..."; \
 		sleep 5; \
 	done
 
 	@echo "Waiting for Argo CD server to be ready..."
-	@kubectl wait --for=condition=available deployment/example-argocd-server \
-		-n $(ARGOCD_NAMESPACE) --timeout=300s
+	kubectl wait --for=condition=available deployment/example-argocd-server \
+		-n {{ARGOCD_NAMESPACE}} --timeout=300s
 
 	@echo "Deploying Argo CD projects..."
 	kubectl apply -f manifests/argo/projects/
@@ -105,24 +99,26 @@ deploy-argo-projects:
 
 argo-port-forward:
 	@echo "Port-forwarding Argo CD on http://localhost:8000"
-	kubectl port-forward -n $(ARGOCD_NAMESPACE) svc/example-argocd-server 8000:80
+	kubectl port-forward -n {{ARGOCD_NAMESPACE}} svc/example-argocd-server 8000:80
+
 
 argo-login:
-	@echo "Logging into Argo CD at $(ARGOCD_SERVER)..."
-	@ARGO_ADMIN=$$(kubectl get secret example-argocd-cluster -n $(ARGOCD_NAMESPACE) \
+	@echo "Logging into Argo CD at {{ARGOCD_SERVER}}..."
+	ARGO_ADMIN=$$(kubectl get secret example-argocd-cluster -n {{ARGOCD_NAMESPACE}} \
 		-o jsonpath="{.data.admin\.password}" | base64 -d); \
 	if [ -z "$$ARGO_ADMIN" ]; then \
 		echo "❌ Failed to retrieve Argo CD admin password"; \
 		exit 1; \
 	fi; \
-	argocd login $(ARGOCD_SERVER) \
+	argocd login {{ARGOCD_SERVER}} \
 		--username admin \
 		--password "$$ARGO_ADMIN" \
 		--insecure; \
 	echo "✅ Argo CD login complete"
 
+
 argo-admin-password:
-	kubectl get secret example-argocd-cluster -n $(ARGOCD_NAMESPACE) \
+	kubectl get secret example-argocd-cluster -n {{ARGOCD_NAMESPACE}} \
 		-o jsonpath="{.data.admin\.password}" | base64 -d
 
 
@@ -133,20 +129,21 @@ argo-admin-password:
 platform-up: bootstrap-cluster bootstrap-argo
 	@echo "🚀 Platform fully ready"
 
+
 bootstrap-cluster:
-	@echo "Bootstrapping cluster"
-	@$(MAKE) create
-	@$(MAKE) create-namespaces
-	@$(MAKE) install-olm
-	@$(MAKE) create-argocd-rbac
-	@$(MAKE) install-argocd-operator
-	@$(MAKE) wait-argocd-install
+	just create
+	just create-namespaces
+	just install-olm
+	just create-argocd-rbac
+	just install-argocd-operator
+	just wait-argocd-install
 	@echo "Cluster ready"
+
 
 bootstrap-argo:
 	@echo "Bootstrapping Argo CD..."
-	@$(MAKE) deploy-argo
-	@$(MAKE) deploy-argo-projects
-	@$(MAKE) argo-admin-password
-	@$(MAKE) argo-port-forward
+	just deploy-argo
+	just deploy-argo-projects
+	just argo-admin-password
+	just argo-port-forward
 	@echo "✅ Argo ready"
