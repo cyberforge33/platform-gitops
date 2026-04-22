@@ -9,7 +9,7 @@ spec:
   # --------------------------------------------
   # SOURCE CONTROL RESTRICTIONS
   # --------------------------------------------
-  # Defines which Git repositories OR Helm repositories
+  # Defines which Git repositories, Helm repositories, OR OCI repositories
   # are allowed as sources for Applications in this project.
   sourceRepos:
     - "https://charts.bitnami.com/bitnami"
