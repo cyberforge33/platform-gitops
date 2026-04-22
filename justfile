@@ -54,18 +54,10 @@ install-argocd-operator:
 	kubectl apply -f manifests/olm/argocd-extension.yaml
 
 wait-argocd-install:
-	@echo "Waiting for ClusterExtension to stabilize..."
-	for i in $(seq 1 60); do \
-		STATUS=$$(kubectl get clusterextension argocd -o jsonpath='{.status.conditions[?(@.type=="Installed")].status}' 2>/dev/null); \
-		echo "Installed status: $$STATUS"; \
-		if [ "$$STATUS" = "True" ]; then \
-			echo "✅ Argo CD installed"; \
-			exit 0; \
-		fi; \
-		sleep 10; \
-	done; \
-	echo "❌ Timeout waiting for Argo CD install"; \
-	exit 1
+	@echo "Waiting for ClusterExtension to be Installed..."
+	kubectl wait clusterextension argocd \
+		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
+		--timeout=600s
 
 
 # -------------------------
