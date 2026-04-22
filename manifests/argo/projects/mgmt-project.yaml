@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mgmt
+  namespace: mgmt
+spec:
+  description: Management environment
+
+  sourceRepos:
+    - '*'
+
+  # Cluster and Namespace
+  destinations:
+    - namespace: mgmt
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
