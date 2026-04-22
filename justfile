@@ -8,6 +8,7 @@ OLM_VERSION := "v1.8.0"
 OLM_NAMESPACE := "olm"
 ARGOCD_SERVER := "localhost:8000"
 ARGOCD_NAMESPACE := "argocd"
+BACKSTAGE_NAMESPACE := "backstage"
 
 
 # -------------------------
@@ -27,9 +28,12 @@ delete:
 
 
 create-namespaces:
-	@echo "Creating required namespaces..."
-	kubectl create ns {{ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	@echo "Creating required namespaces..."	
 	kubectl create ns {{OLM_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create ns {{ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+
+	kubectl create ns {{BACKSTAGE_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl label namespace {{BACKSTAGE_NAMESPACE}} argocd.argoproj.io/managed-by=argocd
 
 
 # -------------------------
@@ -68,7 +72,6 @@ deploy-argo:
 	kubectl get ns {{ARGOCD_NAMESPACE}} >/dev/null 2>&1 || kubectl create ns {{ARGOCD_NAMESPACE}}
 	kubectl apply -f manifests/argo/argocd.yaml
 
-
 deploy-argo-projects:
 	@echo "Waiting for Argo CD server deployment..."
 	until kubectl get deployment example-argocd-server -n {{ARGOCD_NAMESPACE}} >/dev/null 2>&1; do \
@@ -81,7 +84,12 @@ deploy-argo-projects:
 		-n {{ARGOCD_NAMESPACE}} --timeout=300s
 
 	@echo "Deploying Argo CD projects..."
-	kubectl apply -f manifests/argo/projects/
+	kubectl apply -f argocd/projects/
+
+deploy-argo-applications:
+	@echo "Deploying Argo CD applications..."
+	kubectl apply -f argocd/applications/
+
 
 
 # -------------------------
@@ -113,6 +121,13 @@ argo-admin-password:
 		-o jsonpath="{.data.admin\.password}" | base64 -d; \
 	echo " 🔥"
 
+# -------------------------
+# Platform App Access
+# -------------------------
+backstage-port-forward:
+	@echo "Port-forwarding Argo CD on http://localhost:7000"
+	kubectl port-forward -n {{BACKSTAGE_NAMESPACE}} svc/backstage 7000:7007
+
 
 # -------------------------
 # Bootstrap
@@ -120,7 +135,6 @@ argo-admin-password:
 
 platform-up: bootstrap-cluster bootstrap-argo
 	@echo "🚀 Platform fully ready"
-
 
 bootstrap-cluster:
 	just create
@@ -135,6 +149,7 @@ bootstrap-argo:
 	@echo "Bootstrapping Argo CD..."
 	just deploy-argo
 	just deploy-argo-projects
+	just deploy-argo-applications
 	just argo-admin-password
 	just argo-port-forward
 	@echo "✅ Argo ready"
