@@ -110,7 +110,7 @@ argo-login:
 
 
 argo-admin-password:
-	@kubectl get secret example-argocd-cluster -n argocd \
+	@kubectl get secret example-argocd-cluster -n {{ARGOCD_NAMESPACE}} \
 		-o jsonpath="{.data.admin\.password}" | base64 -d; \
 	echo " 🔥"
 
