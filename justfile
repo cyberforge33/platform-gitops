@@ -9,6 +9,8 @@ OLM_NAMESPACE := "olm"
 ARGOCD_SERVER := "localhost:8000"
 ARGOCD_NAMESPACE := "argocd"
 BACKSTAGE_NAMESPACE := "backstage"
+CERT_MANAGER_NAMESPACE := "cert-manager"
+KUBE_SYSTEM := "kube-system"
 
 
 # -------------------------
@@ -31,9 +33,6 @@ create-namespaces:
 	@echo "Creating required namespaces..."	
 	kubectl create ns {{OLM_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create ns {{ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
-
-	kubectl create ns {{BACKSTAGE_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
-	kubectl label namespace {{BACKSTAGE_NAMESPACE}} argocd.argoproj.io/managed-by=argocd
 
 
 # -------------------------
@@ -120,13 +119,6 @@ argo-admin-password:
 	@kubectl get secret example-argocd-cluster -n {{ARGOCD_NAMESPACE}} \
 		-o jsonpath="{.data.admin\.password}" | base64 -d; \
 	echo " 🔥"
-
-# -------------------------
-# Platform App Access
-# -------------------------
-backstage-port-forward:
-	@echo "Port-forwarding Argo CD on http://localhost:7000"
-	kubectl port-forward -n {{BACKSTAGE_NAMESPACE}} svc/backstage 7000:7007
 
 
 # -------------------------

@@ -4,22 +4,15 @@ metadata:
   name: platform
   namespace: argocd
 spec:
-  description: Fully open project (no restrictions)
+  description: Platform Project
 
   sourceRepos:
-    - "*"
+    - '*'
 
   destinations:
-    - namespace: "*"
-      server: "*"
+    - namespace: '*'
+      server: https://kubernetes.default.svc
 
   clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-
-  namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
-
-  orphanedResources:
-    warn: false
+    - group: '*'
+      kind: '*'
