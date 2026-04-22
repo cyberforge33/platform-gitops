@@ -8,9 +8,9 @@ OLM_VERSION := "v1.8.0"
 OLM_NAMESPACE := "olm"
 ARGOCD_SERVER := "localhost:8000"
 ARGOCD_NAMESPACE := "argocd"
-BACKSTAGE_NAMESPACE := "backstage"
-CERT_MANAGER_NAMESPACE := "cert-manager"
-KUBE_SYSTEM := "kube-system"
+NGINX_NAMESPACE := "nginx"
+REDIS_NAMESPACE := "redis"
+POSTGRESQL_NAMESPACE := "postgresql"
 
 
 # -------------------------
@@ -33,6 +33,15 @@ create-namespaces:
 	@echo "Creating required namespaces..."	
 	kubectl create ns {{OLM_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create ns {{ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+
+	kubectl create ns {{NGINX_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl label namespace {{NGINX_NAMESPACE}} argocd.argoproj.io/managed-by=argocd
+
+	kubectl create ns {{REDIS_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl label namespace {{REDIS_NAMESPACE}} argocd.argoproj.io/managed-by=argocd
+
+	kubectl create ns {{POSTGRESQL_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+	kubectl label namespace {{POSTGRESQL_NAMESPACE}} argocd.argoproj.io/managed-by=argocd
 
 
 # -------------------------
@@ -73,13 +82,13 @@ deploy-argo:
 
 deploy-argo-projects:
 	@echo "Waiting for Argo CD server deployment..."
-	until kubectl get deployment example-argocd-server -n {{ARGOCD_NAMESPACE}} >/dev/null 2>&1; do \
+	until kubectl get deployment argocd-server -n {{ARGOCD_NAMESPACE}} >/dev/null 2>&1; do \
 		echo "⏳ waiting..."; \
 		sleep 5; \
 	done
 
 	@echo "Waiting for Argo CD server to be ready..."
-	kubectl wait --for=condition=available deployment/example-argocd-server \
+	kubectl wait --for=condition=available deployment/argocd-server \
 		-n {{ARGOCD_NAMESPACE}} --timeout=300s
 
 	@echo "Deploying Argo CD projects..."
@@ -97,12 +106,12 @@ deploy-argo-applications:
 
 argo-port-forward:
 	@echo "Port-forwarding Argo CD on http://localhost:8000"
-	kubectl port-forward -n {{ARGOCD_NAMESPACE}} svc/example-argocd-server 8000:80
+	kubectl port-forward -n {{ARGOCD_NAMESPACE}} svc/argocd-server 8000:80
 
 
 argo-login:
 	@echo "Logging into Argo CD at {{ARGOCD_SERVER}}..."
-	ARGO_ADMIN=$$(kubectl get secret example-argocd-cluster -n {{ARGOCD_NAMESPACE}} \
+	ARGO_ADMIN=$$(kubectl get secret argocd-cluster -n {{ARGOCD_NAMESPACE}} \
 		-o jsonpath="{.data.admin\.password}" | base64 -d); \
 	if [ -z "$$ARGO_ADMIN" ]; then \
 		echo "❌ Failed to retrieve Argo CD admin password"; \
@@ -116,7 +125,7 @@ argo-login:
 
 
 argo-admin-password:
-	@kubectl get secret example-argocd-cluster -n {{ARGOCD_NAMESPACE}} \
+	@kubectl get secret argocd-cluster -n {{ARGOCD_NAMESPACE}} \
 		-o jsonpath="{.data.admin\.password}" | base64 -d; \
 	echo " 🔥"
 
