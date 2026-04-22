@@ -50,8 +50,7 @@ install-metallb-operator:
 	kubectl apply -f manifests/olm/metallb-extension.yaml
 
 create-metallb-rbac:
-	@echo "Creating MetalLb installer RBAC..."
-	kubectl create ns metallb-system || true
+	@echo "Creating MetalLb installer RBAC..."	
 	kubectl apply -f manifests/olm/metallb-rbac.yaml
 
 wait-metallb-install:
@@ -62,7 +61,6 @@ wait-metallb-install:
 
 create-argocd-rbac:
 	@echo "Creating Argo CD installer RBAC..."
-	kubectl create ns argocd || true
 	kubectl apply -f manifests/olm/argocd-rbac.yaml
 
 install-argocd-operator:
