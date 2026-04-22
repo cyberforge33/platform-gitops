@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: mgmt
-  namespace: mgmt
+  namespace: argocd
 spec:
   description: Management environment
 
