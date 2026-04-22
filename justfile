@@ -143,7 +143,7 @@ argo-admin-password:
 # Bootstrap
 # -------------------------
 
-platform-up: bootstrap-cluster bootstrap-argo
+platform-up: bootstrap-cluster bootstrap-metallb bootstrap-argo
 	@echo "🚀 Platform fully ready"
 
 
