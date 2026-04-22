@@ -1,18 +1,22 @@
-# 🧪 Kind Single-Cluster Platform
+# 🧪 Kind Single-Cluster Platform (GitOps Sandbox)
 
-This repository provides a simple way to create and manage a local Kubernetes platform using **kind**, a Makefile-driven workflow, and platform components like **Operator Lifecycle Manager (OLM)** and **Argo CD Operator** for GitOps.
+This repository provides a local Kubernetes platform using:
+
+* **kind** for cluster provisioning
+* **Argo CD** for GitOps reconciliation
+* **OLM (Operator Lifecycle Manager v1)** for operator installation
+* **Helm + GitOps patterns** for platform services
 
 It implements a **single-cluster platform model** where:
 
 * A single **Argo CD control plane** runs inside the cluster
-* `dev`, `test`, and `prod` are modeled as **namespaces**
-* All deployments are managed via **GitOps**
+* `nginx`, `redis`, and `postgresql` are modeled as **managed namespaces**
+* All workloads are deployed via **GitOps (no kubectl apply workflows for apps)**
+* Infrastructure is split into:
 
-This serves as a lightweight **platform engineering sandbox** for experimenting with:
-
-* Kubernetes Operators
-* GitOps workflows
-* Environment promotion patterns (dev → test → prod)
+  * Bootstrap layer (cluster + operators)
+  * Platform layer (Argo CD + projects)
+  * Application layer (Helm/Manifests)
 
 ---
 
@@ -22,129 +26,161 @@ This serves as a lightweight **platform engineering sandbox** for experimenting 
 .
 ├── Makefile
 ├── catalog.yaml
-├── operators/
-│   └── argo-subscription.yaml
 ├── kind/
 │   └── kind.yaml
-└── manifests/
-    └── argo/
-        ├── argocd.yaml
-        ├── project.yaml
-        └── application.yaml
+├── manifests/
+│   ├── argo/
+│   │   ├── argocd.yaml
+│   │   ├── project.yaml
+│   │   └── application.yaml
+│   └── olm/
+│       ├── argocd-rbac.yaml
+│       └── argocd-extension.yaml
+├── argocd/
+│   ├── applications/
+│   └── projects/
 ```
 
 ---
 
 # ⚙️ Prerequisites
 
-Make sure you have the following installed:
-
-* `docker`
-* `kind`
-* `kubectl`
-* `make`
-* `curl`
-* `argocd` CLI (installed via your Makefile or manually)
+* docker
+* kind
+* kubectl
+* make or just
+* curl
+* argocd CLI (optional but recommended)
 
 ---
 
-# 🌍 Environment Configuration
-
-The Makefile uses the following variables:
+# 🌍 Key Architecture Concept
 
 ```
-KIND_CLUSTER_NAME ?= platform
-KIND_CONFIG_DIR := kind
-ARGOCD_SERVER ?= localhost:8000
-ARGOCD_NAMESPACE ?= argocd
-CSV_NAME ?= argocd-operator.v0.17.0
-```
-
-* `KIND_CLUSTER_NAME` → name of your local cluster
-* `ARGOCD_SERVER` → Argo CD endpoint (via port-forward)
-* `ARGOCD_NAMESPACE` → namespace where Argo CD runs
-* `CSV_NAME` → operator version to wait on
-
-You can override variables at runtime.
-
----
-
-# 🏗️ Architecture
-
-```
-        ┌─────────────────────────────┐
-        │        kind cluster         │
-        │                             │
-        │   ┌─────────────────────┐   │
-        │   │     Argo CD         │   │
-        │   │   (control plane)   │   │
-        │   └─────────┬───────────┘   │
-        │             │               │
-        │   ┌─────────┼─────────┐     │
-        │   │         │         │     │
-        │  dev       test      prod   │
-        │ (ns)      (ns)      (ns)    │
-        │                             │
-        └─────────────────────────────┘
+                 ┌─────────────────────────────┐
+                 │        kind cluster         │
+                 │                             │
+                 │   ┌─────────────────────┐   │
+                 │   │     Argo CD         │   │
+                 │   │  (GitOps control)   │   │
+                 │   └─────────┬───────────┘   │
+                 │             │               │
+                 │   ┌─────────┼─────────┐     │
+                 │   │         │         │     │
+                 │ nginx     redis   postgresql │
+                 │ (ns)      (ns)      (ns)     │
+                 │                             │
+                 └─────────────────────────────┘
 ```
 
 ---
 
-# 🚀 Usage
+# 🚀 Bootstrap Workflow
 
----
+## 🏗 Step 1 — Create Cluster + Base Namespaces
 
-## 🏗️ Bootstrap Cluster
-
-Creates the cluster, installs OLM, and installs the Argo CD Operator:
-
-```
-make bootstrap-cluster
+```bash
+just create
+just create-namespaces
 ```
 
-This will:
+### Important correction:
 
-* Create kind cluster
-* Create namespaces (`dev`, `test`, `prod`)
-* Install OLM
-* Apply operator catalog
-* Install Argo CD Operator
+Namespaces are created here **because Argo CD does NOT reliably create them unless explicitly configured per Application.**
 
----
+Each namespace is labeled for Argo management:
 
-## 🚀 Bootstrap Argo CD
-
-Waits for the operator and deploys Argo CD + GitOps resources:
-
-```
-make bootstrap-argo
-```
-
-This will:
-
-* Wait for operator CSV → `Succeeded`
-* Deploy Argo CD instance
-* Deploy AppProject
-* Deploy Application
-
----
-
-# 🧠 Recommended Workflow
-
-Full platform bootstrap:
-
-```
-make platform-up
+```bash
+argocd.argoproj.io/managed-by=argocd
 ```
 
 ---
 
-# ⚠️ Notes & Tips
+## 🧱 Step 2 — Install OLM v1
 
-### 1. Idempotency
+```bash
+just install-olm
+```
 
-All major commands are safe to re-run:
+---
 
-* cluster creation skips if exists
-* namespaces use `|| true`
-* operator waits until ready
+## ⚙️ Step 3 — Install Argo CD Operator
+
+```bash
+just create-argocd-rbac
+just install-argocd-operator
+just wait-argocd-install
+```
+
+---
+
+## 🚀 Step 4 — Deploy Argo CD Instance
+
+```bash
+just deploy-argo
+```
+
+---
+
+## 📦 Step 5 — Apply GitOps Structure
+
+```bash
+just deploy-argo-projects
+just deploy-argo-applications
+```
+
+This installs:
+
+* AppProjects (security boundaries)
+* Applications (workloads)
+
+
+# 🧠 Design Model (IMPORTANT)
+
+You now have 3 layers:
+
+```
+BOOTSTRAP LAYER
+→ kind, OLM, Argo CD install
+
+PLATFORM LAYER
+→ AppProjects (security boundaries)
+
+APPLICATION LAYER
+→ Helm charts (nginx, redis, postgres)
+```
+
+---
+
+# 🛠 Key Make Targets
+
+## Full platform bootstrap
+
+```bash
+just platform-up
+```
+
+---
+
+## Cluster only
+
+```bash
+just create
+just create-namespaces
+```
+
+---
+
+## Argo only
+
+```bash
+just bootstrap-argo
+```
+
+---
+
+## Access Argo UI
+
+```bash
+just argo-port-forward
+```
