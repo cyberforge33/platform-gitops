@@ -25,16 +25,19 @@ spec:
   # - namespace = allowed target namespaces for workloads
   destinations:
 
-    # Redis workloads allowed here
-    - namespace: "redis"
+    # NGINX workloads allowed here
+    - name: "nginx"
+      namespace: "nginx"
       server: https://kubernetes.default.svc
 
     # PostgreSQL workloads allowed here
-    - namespace: "postgresql"
+    - name: "postgresql"
+      namespace: "postgresql"
       server: https://kubernetes.default.svc
 
-    # NGINX workloads allowed here
-    - namespace: "nginx"
+    # Redis workloads allowed here
+    - name: "redis"
+      namespace: "redis"
       server: https://kubernetes.default.svc
 
 
