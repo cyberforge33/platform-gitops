@@ -27,6 +27,7 @@ delete:
 
 create-namespaces:
 	@echo "Creating required namespaces..."
+	kubectl create ns metallb-system --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create ns argocd --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create ns olm --dry-run=client -o yaml | kubectl apply -f -
 
@@ -44,6 +45,21 @@ install-olm:
 # Operator Install (OLM v1)
 # -------------------------
 
+install-metallb-operator:
+	@echo "Installing MetalLB Operator via OLM..."
+	kubectl apply -f manifests/olm/metallb-extension.yaml
+
+create-metallb-rbac:
+	@echo "Creating MetalLb installer RBAC..."
+	kubectl create ns metallb-system || true
+	kubectl apply -f manifests/olm/metallb-rbac.yaml
+
+wait-metallb-install:
+	@echo "Waiting for ClusterExtension MetalLb to be Installed..."
+	kubectl wait clusterextension metallb \
+		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
+		--timeout=600s
+
 create-argocd-rbac:
 	@echo "Creating Argo CD installer RBAC..."
 	kubectl create ns argocd || true
@@ -54,7 +70,7 @@ install-argocd-operator:
 	kubectl apply -f manifests/olm/argocd-extension.yaml
 
 wait-argocd-install:
-	@echo "Waiting for ClusterExtension to be Installed..."
+	@echo "Waiting for ClusterExtension ArgoCD to be Installed..."
 	kubectl wait clusterextension argocd \
 		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
 		--timeout=600s
@@ -127,6 +143,9 @@ bootstrap-cluster:
 	just create
 	just create-namespaces
 	just install-olm
+	just create-metallb-rbac
+	just install-metallb-operator
+	just wait-metallb-install
 	just create-argocd-rbac
 	just install-argocd-operator
 	just wait-argocd-install

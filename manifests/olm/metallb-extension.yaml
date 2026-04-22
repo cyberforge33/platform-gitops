@@ -1,0 +1,14 @@
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterExtension
+metadata:
+  name: metallb
+spec:
+  namespace: metallb-system
+  serviceAccount:
+    name: metallb-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: metallb-operator
+      channels: [beta]
+      version: 0.14.0
