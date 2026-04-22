@@ -7,7 +7,11 @@ spec:
   sourceRepos:
     - "*"
   destinations:
-    - namespace: "*"
+    - namespace: "nginx"
+      server: https://kubernetes.default.svc
+    - namespace: "redis"
+      server: https://kubernetes.default.svc
+    - namespace: "postgresql"
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
