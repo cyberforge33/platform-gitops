@@ -6,7 +6,6 @@ KIND_CLUSTER_NAME := "platform"
 KIND_CONFIG_DIR := "kind"
 OLM_VERSION := "v1.8.0"
 OLM_NAMESPACE := "olm"
-METALLB_NAMESPACE := "metallb-system"
 ARGOCD_SERVER := "localhost:8000"
 ARGOCD_NAMESPACE := "argocd"
 
@@ -29,7 +28,6 @@ delete:
 
 create-namespaces:
 	@echo "Creating required namespaces..."
-	kubectl create ns {{METALLB_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create ns {{ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create ns {{OLM_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
 
@@ -47,20 +45,6 @@ install-olm:
 # Operator Install (OLM v1)
 # -------------------------
 
-install-metallb-operator:
-	@echo "Installing MetalLB Operator via OLM..."
-	kubectl apply -f manifests/olm/metallb-extension.yaml
-
-create-metallb-rbac:
-	@echo "Creating MetalLb installer RBAC..."	
-	kubectl apply -f manifests/olm/metallb-rbac.yaml
-
-wait-metallb-install:
-	@echo "Waiting for ClusterExtension MetalLb to be Installed..."
-	kubectl wait clusterextension metallb \
-		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
-		--timeout=600s
-
 create-argocd-rbac:
 	@echo "Creating Argo CD installer RBAC..."
 	kubectl apply -f manifests/olm/argocd-rbac.yaml
@@ -74,15 +58,6 @@ wait-argocd-install:
 	kubectl wait clusterextension argocd \
 		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
 		--timeout=600s
-
-# -------------------------
-# MetalLB
-# -------------------------
-
-deploy-metallb:
-	@echo "Deploying MetalLb instance..."
-
-	@echo "✅ MetalLB deployed"
 
 # -------------------------
 # Argo CD
@@ -143,7 +118,7 @@ argo-admin-password:
 # Bootstrap
 # -------------------------
 
-platform-up: bootstrap-cluster bootstrap-metallb bootstrap-argo
+platform-up: bootstrap-cluster bootstrap-argo
 	@echo "🚀 Platform fully ready"
 
 
@@ -151,19 +126,10 @@ bootstrap-cluster:
 	just create
 	just create-namespaces
 	just install-olm
-	just create-metallb-rbac
-	just install-metallb-operator
-	just wait-metallb-install
 	just create-argocd-rbac
 	just install-argocd-operator
 	just wait-argocd-install
 	@echo "Cluster ready"
-
-
-bootstrap-metallb:
-	@echo "Bootstrapping MetalLb..."
-	just deploy-metallb
-	@echo "✅ MetalLb ready"
 
 bootstrap-argo:
 	@echo "Bootstrapping Argo CD..."
