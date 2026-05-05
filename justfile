@@ -45,6 +45,16 @@ create-namespaces:
 
 
 # -------------------------
+# Metric Server
+# -------------------------
+install-metrics-server:
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+	kubectl -n kube-system patch deployment metrics-server \
+	  --type='json' \
+	  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+	kubectl -n kube-system rollout status deployment metrics-server
+
+# -------------------------
 # OLM v1 (operator-controller)
 # -------------------------
 
@@ -140,6 +150,7 @@ platform-up: bootstrap-cluster bootstrap-argo
 bootstrap-cluster:
 	just create
 	just create-namespaces
+	just install-metric-server
 	just install-olm
 	just create-argocd-rbac
 	just install-argocd-operator
