@@ -65,7 +65,7 @@ install-ingress:
 # -------------------------
 # Metric Server
 # -------------------------
-install-metrics-server:
+install-metric-server:
 	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 	kubectl -n kube-system patch deployment metrics-server \
 	  --type='json' \
@@ -163,15 +163,18 @@ argo-admin-password:
 # Bootstrap
 # -------------------------
 
-platform-up: bootstrap-cluster bootstrap-argo
+platform-up: bootstrap-exam-prep bootstrap-cluster bootstrap-argo
 	@echo "🚀 Platform fully ready"
 
-bootstrap-cluster:
+bootstrap-exam-prep:
 	just create
 	just create-namespaces
 	just install-metallb
 	just install-ingress
 	just install-metric-server
+	@echo "Exam prep ready"
+
+bootstrap-cluster:
 	just install-olm
 	just create-argocd-rbac
 	just install-argocd-operator
