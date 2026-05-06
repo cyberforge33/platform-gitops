@@ -45,6 +45,13 @@ create-namespaces:
 
 
 # -------------------------
+# Ingress Controller
+# -------------------------
+install-ingress:
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+	kubectl -n ingress-nginx rollout status deployment ingress-nginx-controller
+
+# -------------------------
 # Metric Server
 # -------------------------
 install-metrics-server:
@@ -150,6 +157,7 @@ platform-up: bootstrap-cluster bootstrap-argo
 bootstrap-cluster:
 	just create
 	just create-namespaces
+	just install-ingress
 	just install-metric-server
 	just install-olm
 	just create-argocd-rbac
