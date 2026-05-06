@@ -45,11 +45,22 @@ create-namespaces:
 
 
 # -------------------------
+# MetalLB
+# -------------------------
+install-metallb:
+	kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+	kubectl -n metallb-system rollout status deployment/controller
+	kubectl -n metallb-system rollout status daemonset/speaker
+	kubectl apply -f manifests/metallb/
+
+
+# -------------------------
 # Ingress Controller
 # -------------------------
 install-ingress:
 	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 	kubectl -n ingress-nginx rollout status deployment ingress-nginx-controller
+
 
 # -------------------------
 # Metric Server
@@ -60,6 +71,7 @@ install-metrics-server:
 	  --type='json' \
 	  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 	kubectl -n kube-system rollout status deployment metrics-server
+
 
 # -------------------------
 # OLM v1 (operator-controller)
@@ -157,6 +169,7 @@ platform-up: bootstrap-cluster bootstrap-argo
 bootstrap-cluster:
 	just create
 	just create-namespaces
+	just install-metallb
 	just install-ingress
 	just install-metric-server
 	just install-olm
