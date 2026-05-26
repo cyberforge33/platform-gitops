@@ -12,6 +12,24 @@ NGINX_NAMESPACE := "nginx"
 REDIS_NAMESPACE := "redis"
 POSTGRESQL_NAMESPACE := "postgresql"
 
+# -------------------------
+# Install/Update K8s Tools
+# -------------------------
+update-k9s:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Downloading the latest K9s Debian package..."
+    wget https://github.com/derailed/k9s/releases/latest/download/k9s_linux_amd64.deb
+    
+    echo "Installing K9s..."
+    sudo apt install ./k9s_linux_amd64.deb
+    
+    echo "Cleaning up installer package..."
+    rm k9s_linux_amd64.deb
+    
+    echo "Successfully updated!"
+    k9s version
+
 
 # -------------------------
 # Cluster Lifecycle
@@ -165,6 +183,10 @@ argo-admin-password:
 
 platform-up: bootstrap-exam-prep bootstrap-cluster bootstrap-argo
 	@echo "🚀 Platform fully ready"
+
+bootstrap-tools:
+	just update-k9s
+	@echo "Tools all up-to-date"
 
 bootstrap-exam-prep:
 	just create
