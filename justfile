@@ -30,6 +30,34 @@ update-k9s:
     echo "Successfully updated!"
     k9s version
 
+# -------------------------
+# Install/Update Argo CD CLI
+# -------------------------
+update-argo-cli:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    TMP_FILE=$(mktemp)
+
+    if command -v argocd >/dev/null 2>&1; then
+        echo "Updating Argo CD CLI..."
+        argocd version --client || true
+    else
+        echo "Installing Argo CD CLI..."
+    fi
+
+    curl -fsSL \
+      -o "$$TMP_FILE" \
+      https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+
+    chmod +x "$$TMP_FILE"
+
+    sudo install -m 755 "$$TMP_FILE" /usr/local/bin/argocd
+
+    rm -f "$$TMP_FILE"
+
+    argocd version --client
+
 
 # -------------------------
 # Cluster Lifecycle
@@ -186,13 +214,12 @@ platform-up: bootstrap-exam-prep bootstrap-cluster bootstrap-argo
 
 bootstrap-tools:
 	just update-k9s
+	just update-argocli
 	@echo "Tools all up-to-date"
 
 bootstrap-exam-prep:
 	just create
 	just create-namespaces
-	just install-metallb
-	just install-ingress
 	just install-metric-server
 	@echo "Exam prep ready"
 
