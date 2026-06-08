@@ -209,12 +209,12 @@ argo-admin-password:
 # Bootstrap
 # -------------------------
 
-platform-up: bootstrap-exam-prep bootstrap-cluster bootstrap-argo
+platform-up: bootstrap-tools bootstrap-exam-prep bootstrap-cluster bootstrap-argo
 	@echo "🚀 Platform fully ready"
 
 bootstrap-tools:
 	just update-k9s
-	just update-argocli
+	just update-argo-cli
 	@echo "Tools all up-to-date"
 
 bootstrap-exam-prep:
