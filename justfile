@@ -1,4 +1,12 @@
 # =========================
+# Single Cluster GitOps Platform (OLM v1)
+# =========================
+OLM_VERSION := "v1.8.0"
+OLM_NAMESPACE := "olm"
+ARGOCD_SERVER := "localhost:8000"
+ARGOCD_NAMESPACE := "argocd"
+
+# =========================
 # CLUSTERS
 # =========================
 
@@ -31,28 +39,91 @@ delete-all-clusters:
         kind delete cluster --name "$c"
     done
 
-
 # =========================
-# ARGO CD
+# OLM v1
 # =========================
 
-argo-install:
-    kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-
-    kubectl apply -n argocd \
-        -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+install-olm:
+	@echo "Installing OLM v1 (operator-controller {{OLM_VERSION}})..."
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/download/{{OLM_VERSION}}/install.sh | bash -s
 
 
-argo-wait:
-    kubectl wait deployment argocd-server \
-        -n argocd \
-        --for=condition=available \
-        --timeout=300s
+# -------------------------
+# Operator Install (OLM v1)
+# -------------------------
+
+create-argocd-rbac:
+	@echo "Creating Argo CD installer RBAC..."
+	kubectl apply -f manifests/olm/argocd-rbac.yaml
+
+install-argocd-operator:
+	@echo "Installing Argo CD via ClusterExtension..."
+	kubectl apply -f manifests/olm/argocd-extension.yaml
+
+wait-argocd-install:
+	@echo "Waiting for ClusterExtension ArgoCD to be Installed..."
+	kubectl wait clusterextension argocd \
+		--for=jsonpath='{.status.conditions[?(@.type=="Installed")].status}'=True \
+		--timeout=600s
 
 
-argo-add cluster:
-    @echo "Adding cluster: {{cluster}}"
-    argocd cluster add "kind-{{cluster}}" --name "{{cluster}}"
+# -------------------------
+# Argo CD
+# -------------------------
+
+deploy-argo:
+	@echo "Deploying Argo CD instance..."
+	kubectl get ns {{ARGOCD_NAMESPACE}} >/dev/null 2>&1 || kubectl create ns {{ARGOCD_NAMESPACE}}
+	kubectl apply -f manifests/argo/argocd.yaml
+
+deploy-argo-projects:
+	@echo "Waiting for Argo CD server deployment..."
+	until kubectl get deployment argocd-server -n {{ARGOCD_NAMESPACE}} >/dev/null 2>&1; do \
+		echo "⏳ waiting..."; \
+		sleep 5; \
+	done
+
+	@echo "Waiting for Argo CD server to be ready..."
+	kubectl wait --for=condition=available deployment/argocd-server \
+		-n {{ARGOCD_NAMESPACE}} --timeout=300s
+
+	@echo "Deploying Argo CD projects..."
+	kubectl apply -f argocd/projects/
+
+deploy-argo-applications:
+	@echo "Deploying Argo CD applications..."
+	kubectl apply -f argocd/applications/
+
+
+
+# -------------------------
+# Argo CD Access
+# -------------------------
+
+argo-port-forward:
+	@echo "Port-forwarding Argo CD on http://localhost:8000"
+	kubectl port-forward -n {{ARGOCD_NAMESPACE}} svc/argocd-server 8000:80
+
+
+argo-login:
+	@echo "Logging into Argo CD at {{ARGOCD_SERVER}}..."
+	ARGO_ADMIN=$$(kubectl get secret argocd-cluster -n {{ARGOCD_NAMESPACE}} \
+		-o jsonpath="{.data.admin\.password}" | base64 -d); \
+	if [ -z "$$ARGO_ADMIN" ]; then \
+		echo "❌ Failed to retrieve Argo CD admin password"; \
+		exit 1; \
+	fi; \
+	argocd login {{ARGOCD_SERVER}} \
+		--username admin \
+		--password "$$ARGO_ADMIN" \
+		--insecure; \
+	echo "✅ Argo CD login complete"
+
+
+argo-admin-password:
+	@kubectl get secret argocd-cluster -n {{ARGOCD_NAMESPACE}} \
+		-o jsonpath="{.data.admin\.password}" | base64 -d; \
+	echo " 🔥"
 
 
 # =========================
@@ -75,9 +146,6 @@ bootstrap-prod cluster:
     @echo "Bootstrapping PROD cluster: {{cluster}}"
 
     just create-cluster {{cluster}}
-    just argo-install
-    just argo-wait
-    just argo-add {{cluster}}
 
     @echo "PROD READY (Argo installed)"
 
@@ -91,6 +159,17 @@ platform-up:
     just bootstrap-test test
     just bootstrap-prod prod
     @echo "🚀 Platform fully ready"
+
+argo-up:
+	just install-olm
+	just create-argocd-rbac
+	just install-argocd-operator
+	just wait-argocd-install
+	just deploy-argo
+	just deploy-argo-projects
+	just argo-admin-password
+	just argo-port-forward
+	@echo "Cluster ready"
 
 
 platform-down:
