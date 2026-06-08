@@ -24,11 +24,11 @@ delete-all-clusters:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    @echo "Deleting ALL clusters..."
+    echo "Deleting ALL clusters..."
 
     for c in $(kind get clusters); do
-        @echo "Deleting: $$c"
-        kind delete cluster --name "$$c"
+        echo "Deleting: $c"
+        kind delete cluster --name "$c"
     done
 
 
