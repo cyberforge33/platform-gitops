@@ -72,8 +72,7 @@ wait-argocd-install:
 # -------------------------
 
 deploy-argo:
-	@echo "Deploying Argo CD instance..."
-	kubectl get ns {{ARGOCD_NAMESPACE}} >/dev/null 2>&1 || kubectl create ns {{ARGOCD_NAMESPACE}}
+	@echo "Deploying Argo CD instance..."	
 	kubectl apply -f manifests/argo/argocd.yaml
 
 deploy-argo-projects:
@@ -154,14 +153,24 @@ bootstrap-prod cluster:
 # PLATFORM
 # =========================
 
+bootstrap-all: platform-up olm-up argo-up
+    @echo "🚀 Building platform"
+
+
 platform-up:
     just bootstrap-dev dev
     just bootstrap-test test
     just bootstrap-prod prod
-    @echo "🚀 Platform fully ready"
+    @echo "✅ Cluster fully ready"
+
+
+olm-up:
+	just install-olm
+	@echo "✅ OLM ready"
+
 
 argo-up:
-	just install-olm
+	kubectl get ns {{ARGOCD_NAMESPACE}} >/dev/null 2>&1 || kubectl create ns {{ARGOCD_NAMESPACE}}
 	just create-argocd-rbac
 	just install-argocd-operator
 	just wait-argocd-install
@@ -169,7 +178,7 @@ argo-up:
 	just deploy-argo-projects
 	just argo-admin-password
 	just argo-port-forward
-	@echo "Cluster ready"
+	@echo "✅ Argo ready"
 
 
 platform-down:
