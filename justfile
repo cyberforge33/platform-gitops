@@ -154,7 +154,7 @@ bootstrap-prod cluster:
 # =========================
 
 bootstrap-all: platform-up olm-up argo-up
-    @echo "🚀 Building platform"
+    @echo "🚀 Platform ready"
 
 
 platform-up:
