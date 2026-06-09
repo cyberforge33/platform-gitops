@@ -1,0 +1,98 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd  # AppProject is a logical Argo CD boundary object (not a Kubernetes namespace-scoped workload)
+
+spec:
+
+  # --------------------------------------------
+  # SOURCE CONTROL RESTRICTIONS
+  # --------------------------------------------
+  # Defines which Git repositories, Helm repositories, OR OCI repositories
+  # are allowed as sources for Applications in this project.
+  sourceRepos:
+    - "https://charts.bitnami.com/bitnami"
+
+
+  # --------------------------------------------
+  # DESTINATION RESTRICTIONS
+  # --------------------------------------------
+  # Defines WHERE Applications in this project are allowed to deploy.
+  #
+  # Key concepts:
+  # - server = Kubernetes API endpoint (in-cluster in this case)
+  # - namespace = allowed target namespaces for workloads
+  destinations:
+
+    # NGINX workloads allowed here
+    - name: "nginx"
+      namespace: "nginx"
+      server: https://kubernetes.default.svc
+
+    # PostgreSQL workloads allowed here
+    - name: "postgresql"
+      namespace: "postgresql"
+      server: https://kubernetes.default.svc
+
+    # Redis workloads allowed here
+    - name: "redis"
+      namespace: "redis"
+      server: https://kubernetes.default.svc
+
+
+  # --------------------------------------------
+  # CLUSTER RESOURCE PERMISSIONS
+  # --------------------------------------------
+  # Controls whether this project can manage CLUSTER-SCOPED resources.
+  #
+  # Cluster-scoped resources include:
+  # - CRDs (CustomResourceDefinitions)
+  # - ClusterRoles / ClusterRoleBindings
+  # - Namespaces
+  # - StorageClasses
+  #
+  # IMPORTANT:
+  # - EMPTY LIST = strongest security posture (recommended for platform layer)
+  # - "*" would allow cluster-wide mutation (dangerous in shared clusters)
+  #
+  # BEST PRACTICE:
+  # - Only a dedicated "bootstrap" project should allow cluster resources
+  # - Platform project should NOT manage cluster-scoped resources
+  clusterResourceWhitelist: []
+
+
+  # -------------------------------------------------
+  # NAMESPACED RESOURCE PERMISSIONS (IMPORTANT)
+  # -------------------------------------------------
+  # This controls what NAMESPACED resources are allowed (Deployments, Services, ConfigMaps, etc.)
+  # Without this, Argo CD assumes default restrictions
+  # kubectl api-resources OR kubectl describe crd <crd name>
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+
+  # -------------------------------------------------
+  # ROLE-BASED ACCESS CONTROL (OPTIONAL BUT IMPORTANT)
+  # -------------------------------------------------
+  # Allows future multi-team setups (platform vs dev teams)
+  roles:
+    - name: admin
+      description: Full access to platform applications
+      policies:
+        - p, proj:platform:admin, applications, *, platform/*, allow
+
+    - name: read-only
+      description: Read-only access to applications
+      policies:
+        - p, proj:platform:read-only, applications, get, platform/*, allow
+
+
+  # -------------------------------------------------
+  # ADDITIONAL SAFETY CONTROLS
+  # -------------------------------------------------
+  orphanedResources:
+    warn: true
+    # If enabled, Argo will warn when resources exist
+    # in cluster but are no longer in Git
