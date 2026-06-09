@@ -177,7 +177,6 @@ argo-up:
 	just deploy-argo
 	just deploy-argo-projects
 	just argo-admin-password
-	just argo-port-forward
 	@echo "✅ Argo ready"
 
 
